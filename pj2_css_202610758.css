@@ -1,0 +1,65 @@
+
+@charset "utf-8";
+
+body {
+  background-image: url(https://server.wallpaperalchemy.com/storage/wallpapers/92/windows-xp-wallpaper-bliss-4k-wallpaper.jpeg);
+  background-size: cover;
+  display: flex; 
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  margin: 0;
+}
+
+/* 2. 회색 메인 박스 설정 */
+.main-container {
+  background-color: #ffffff;
+  border-radius: 50px; 
+  border-style: groove;
+  width: 700px;
+  height: 500px;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+h1 {
+  color: black;
+  font-size: 2.5rem;
+  margin: 0;
+}
+
+/* 4. 노란색 버튼 스타일 */
+.yellow-button {
+  background-color: #ffff00;
+  width: 180px;
+  height: 60px;
+  border-radius: 20px;
+  border: 2px solid #000;
+  cursor: pointer;
+  transition: transform 0.1s;
+  text-decoration: none;
+}
+
+/* 화면 하단 우측에 고정될 버튼 스타일 */
+.setting-button {
+    position: fixed;
+    bottom: 20px !important; 
+    right: 20px !important;   
+
+    width: 100px;
+    height: 35px;
+    background-color: #919191;
+    border: 2px solid black;
+    border-radius: 30px;
+
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    /* font-weight: bold; */
+    z-index: 999;
+}
