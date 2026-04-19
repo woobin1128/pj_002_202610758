@@ -2,7 +2,7 @@
 @charset "utf-8";
 
 body {
-  background-image: url(https://server.wallpaperalchemy.com/storage/wallpapers/92/windows-xp-wallpaper-bliss-4k-wallpaper.jpeg);
+  background-image: url(intro.png);
   background-size: cover;
   display: flex; 
   justify-content: center;
