@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>그들은 황혼을 견디고 여명을 마주쳤다. 숲 속, 새들의 지저귐은 멈췄는가?</title>
+    <style>
+        body { text-align: center; background-color: #f7f7f7; font-family: sans-serif; }
+        /* 캔버스 배경 이미지를 CSS에서 한 번에 넣으면 자바스크립트가 편해집니다 */
+        canvas { 
+            background: rgba(255, 255, 255, 0.18); /* 여기에 url('배경.png')를 넣으면 게임 배경이 됩니다 */
+            display: block; margin: 20px auto; border-bottom: 3px solid #333; 
+        }
+        #retryBtn { 
+            padding: 10px 20px; font-size: 20px; cursor: pointer; display: none;
+            background: #ff5722; color: white; border: none; border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="info">
+        <h1>세계의 운명을 바꾸기 위한 당신의 여정이 시작된다!!</h1>
+        <h2 id="msg">스페이스를 눌러 모험 떠나기</h1>
+        <h2 id="scoreDisplay">점수: 0</h2>
+    </div>
+    
+    <canvas id="gameCanvas" width="1000" height="400"></canvas>
+    <button id="retryBtn" onclick="location.reload()">다시 도전</button>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // [간소화] 이미지 생성 코드를 한 줄로 정리
+        const playerImg = new Image(); playerImg.src = 'cat_player_jump.png';
+        const obsImg = new Image(); obsImg.src = 'tree.png';
+
+        // [간소화] 게임 상태 변수들
+        let isStarted = false;
+        let isGameOver = false;
+        let score = 0;
+        let speed = 4; // currentSpeed 대신 짧게 speed
+        
+        // 플레이어 설정
+        let player = { x: 60, y: 330, w: 50, h: 70, dy: 0 };
+        let obstacles = [];
+        let frame = 0;
+
+        function update() {
+            if (!isStarted || isGameOver) return;
+
+            ctx.clearRect(0, 0, 1000, 400); // 화면 닦기
+
+            // 1. 점수 올리기 (프레임마다 조금씩)
+            score++;
+            document.getElementById('scoreDisplay').innerText = "점수: " + Math.floor(score/10);
+
+            // 2. 플레이어 움직임 (중력)
+            player.dy += 0.3; // 중력
+            player.y += player.dy;
+
+            if (player.y > 330) { // 바닥 체크
+                player.y = 330;
+                player.dy = 0;
+            }
+            ctx.drawImage(playerImg, player.x, player.y, player.w, player.h);
+
+            // 3. 장애물 만들기 (120프레임마다 하나씩)
+            if (frame % 120 === 0) {
+                obstacles.push({ x: 1000, y: 320, w: 55, h: 80 });
+            }
+
+            // 4. 장애물 움직이기 & 충돌 체크
+            obstacles.forEach((ob, i) => {
+                ob.x -= speed;
+                ctx.drawImage(obsImg, ob.x, ob.y, ob.w, ob.h);
+
+                // 충돌 조건 (간략하게 한 줄씩 확인)
+                if (player.x < ob.x + ob.w && player.x + player.w > ob.x &&
+                    player.y < ob.y + ob.h && player.y + player.h > ob.y) {
+                    endGame();
+                }
+
+                // 화면 밖으로 나간 장애물 삭제
+                if (ob.x < -100) obstacles.splice(i, 1);
+            });
+
+            // 속도 아주 천천히 증가
+            if (speed < 6) speed += 0.001;
+
+            frame++;
+            requestAnimationFrame(update);
+        }
+
+        function endGame() {
+            isGameOver = true;
+            document.getElementById('msg').innerText = "당신은 세계를 구하는데 실패했습니다... 세계는 다시 종말의 길을 향해 나아갑니다..";
+            document.getElementById('retryBtn').style.display = "block";
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                if (!isStarted) {
+                    isStarted = true;
+                    update();
+                } else if (player.y === 330) { // 바닥에 있을 때만 점프
+                    player.dy = -11;
+                }
+            }
+        });
+    </script>
+</body>
+</html>
