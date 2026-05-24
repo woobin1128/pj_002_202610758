@@ -5,9 +5,8 @@
     <title>그들은 황혼을 견디고 여명을 마주쳤다. 숲 속, 새들의 지저귐은 멈췄는가?</title>
     <style>
         body { text-align: center; background-color: #f7f7f7; font-family: sans-serif; }
-        /* 캔버스 배경 이미지를 CSS에서 한 번에 넣으면 자바스크립트가 편해집니다 */
         canvas { 
-            background: rgba(255, 255, 255, 0.18); /* 여기에 url('배경.png')를 넣으면 게임 배경이 됩니다 */
+            background: rgba(255, 255, 255, 0.18); 
             display: block; margin: 20px auto; border-bottom: 3px solid #333; 
         }
         #retryBtn { 
@@ -19,7 +18,7 @@
 <body>
     <div class="info">
         <h1>세계의 운명을 바꾸기 위한 당신의 여정이 시작된다!!</h1>
-        <h2 id="msg">스페이스를 눌러 모험 떠나기</h1>
+        <h2 id="msg">스페이스를 눌러 모험 떠나기</h2>
         <h2 id="scoreDisplay">점수: 0</h2>
     </div>
     
@@ -30,43 +29,66 @@
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         
-        // [간소화] 이미지 생성 코드를 한 줄로 정리
         const playerImg = new Image(); playerImg.src = 'cat_player_jump.png';
         const obsImg = new Image(); obsImg.src = 'tree.png';
 
-        // [간소화] 게임 상태 변수들
         let isStarted = false;
         let isGameOver = false;
         let score = 0;
-        let speed = 4; // currentSpeed 대신 짧게 speed
         
-        // 플레이어 설정
+        // [수정 1] 초반 속도를 더 느리게 (4 -> 3으로 하향 조정)
+        let speed = 3;        
+        const maxSpeed = 10;  
+
         let player = { x: 60, y: 330, w: 50, h: 70, dy: 0 };
         let obstacles = [];
         let frame = 0;
 
+        // [수정 1] 중력을 대폭 낮추어 하강 속도를 늦춥니다.
+        const gravity = 0.18;      
+        const jumpForce = -8.5;
+
+        // 다음 장애물이 나올 때까지 버텨야 하는 랜덤 간격을 저장할 변수
+        let nextSpawnInterval = 120;
+
         function update() {
             if (!isStarted || isGameOver) return;
 
-            ctx.clearRect(0, 0, 1000, 400); // 화면 닦기
+            ctx.clearRect(0, 0, 1000, 400); 
 
-            // 1. 점수 올리기 (프레임마다 조금씩)
-            score++;
-            document.getElementById('scoreDisplay').innerText = "점수: " + Math.floor(score/10);
+            // 현재 속도를 점수에 누적
+            score += speed; 
+            let displayScore = Math.floor(score / 50);
+            document.getElementById('scoreDisplay').innerText = "점수: " + displayScore;
 
-            // 2. 플레이어 움직임 (중력)
-            player.dy += 0.3; // 중력
+            // [수정 2] 오류가 없는 안정적인 가속 공식으로 변경!
+            // 게임 프레임(시간)에 비례해서 속도가 정말 미세하고 부드럽게 증가합니다.
+            if (speed < maxSpeed) {
+                speed += 0.0005; // 초반 속도 3에서 시작해 천천히 12까지 올라갑니다.
+            }
+
+            // 플레이어 움직임 (중력)
+            player.dy += gravity; 
             player.y += player.dy;
 
-            if (player.y > 330) { // 바닥 체크
+            if (player.y > 330) { 
                 player.y = 330;
                 player.dy = 0;
             }
             ctx.drawImage(playerImg, player.x, player.y, player.w, player.h);
 
-            // 3. 장애물 만들기 (120프레임마다 하나씩)
-            if (frame % 120 === 0) {
+            // [수정] 랜덤 간격 스폰 메커니즘
+            // 현재 누적된 frame(시간)이 랜덤으로 정해진 'nextSpawnInterval'에 도달하면 장애물 생성!
+            if (frame >= nextSpawnInterval) {
                 obstacles.push({ x: 1000, y: 320, w: 55, h: 80 });
+                frame = 0; // 카운터 리셋
+
+                // [핵심] 장애물을 만들자마자 '다음번 장애물'이 나올 간격을 랜덤으로 새로 뽑습니다.
+                let minInterval = Math.floor(650 / speed);
+                let maxInterval = Math.floor(1000 / speed);
+                
+                // Math.random()을 이용해 최소값 이상 최대값 이하의 랜덤 정수를 계산합니다.
+                nextSpawnInterval = Math.floor(Math.random() * (maxInterval - minInterval + 1)) + minInterval;
             }
 
             // 4. 장애물 움직이기 & 충돌 체크
@@ -74,20 +96,15 @@
                 ob.x -= speed;
                 ctx.drawImage(obsImg, ob.x, ob.y, ob.w, ob.h);
 
-                // 충돌 조건 (간략하게 한 줄씩 확인)
                 if (player.x < ob.x + ob.w && player.x + player.w > ob.x &&
                     player.y < ob.y + ob.h && player.y + player.h > ob.y) {
                     endGame();
                 }
 
-                // 화면 밖으로 나간 장애물 삭제
                 if (ob.x < -100) obstacles.splice(i, 1);
             });
 
-            // 속도 아주 천천히 증가
-            if (speed < 6) speed += 0.001;
-
-            frame++;
+            frame++; // [주의] 이 frame 변수가 이제 다음 장애물까지 남은 시간을 재는 타이머 역할을 합니다.
             requestAnimationFrame(update);
         }
 
@@ -97,13 +114,21 @@
             document.getElementById('retryBtn').style.display = "block";
         }
 
+        // 스크립트 맨 아래 키다운 이벤트 부분
         window.addEventListener('keydown', (e) => {
             if (e.code === 'Space') {
                 if (!isStarted) {
                     isStarted = true;
+
+                    // [추가] 최초 게임이 시작하는 순간에도 첫 장애물 간격을 요구사항에 맞게 랜덤으로 세팅해 줍니다.
+                    let minInterval = Math.floor(650 / speed);
+                    let maxInterval = Math.floor(1000 / speed);
+                    nextSpawnInterval = Math.floor(Math.random() * (maxInterval - minInterval + 1)) + minInterval;
+
                     update();
-                } else if (player.y === 330) { // 바닥에 있을 때만 점프
-                    player.dy = -11;
+                } else if (player.y === 330) { 
+                    // [수정 2] 도약하는 상승 힘을 줄여서 부드럽게 올라가게 만듭니다.
+                    player.dy = jumpForce;
                 }
             }
         });
